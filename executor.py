@@ -1,7 +1,7 @@
 from jina import Executor, DocumentArray, Document, requests
 from paddleocr import PaddleOCR
 from typing import Optional, Dict
-from jina.logging.logger import JinaLogger
+from jina.logging.logger import default_logger as logger
 import urllib
 import random 
 import string
@@ -35,9 +35,7 @@ class PaddlepaddleOCR(Executor):
         super(PaddlepaddleOCR, self).__init__(**kwargs)
         self.model = PaddleOCR(**self._paddleocr_args)
         self.copy_uri = copy_uri
-        self.logger = JinaLogger(
-            getattr(self.metas, 'name', self.__class__.__name__)
-        ).logger
+        self.logger = logger
 
     @requests()
     def extract(self, docs: Optional[DocumentArray] = None, **kwargs):

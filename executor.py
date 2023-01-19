@@ -1,7 +1,7 @@
 from jina import Executor, DocumentArray, Document, requests
 from paddleocr import PaddleOCR
 from typing import Optional, Dict
-from jina.logging.logger import default_logger as logger
+from jina.logging.predefined import default_logger as logger
 import urllib
 import random 
 import string
@@ -31,11 +31,14 @@ class PaddlepaddleOCR(Executor):
         self._paddleocr_args = paddleocr_args or {}
         self._paddleocr_args.setdefault('use_angle_cls', True) 
         self._paddleocr_args.setdefault('lang', 'en')
-        self._paddleocr_args.setdefault('use_gpu', False)
+        if isinstance(paddleocr_args, dict):
+            self._paddleocr_args.setdefault('use_gpu', paddleocr_args['use_gpu'] if 'use_gpu' in paddleocr_args else True)
+        print(f'paddleocr_args: {self._paddleocr_args}')
         super(PaddlepaddleOCR, self).__init__(**kwargs)
         self.model = PaddleOCR(**self._paddleocr_args)
         self.copy_uri = copy_uri
-        self.logger = logger
+        # print(f'paddleocr version: {PaddleOCR.__version__}')
+        # self.logger = logger
 
     @requests()
     def extract(self, docs: Optional[DocumentArray] = None, **kwargs):
@@ -48,6 +51,7 @@ class PaddlepaddleOCR(Executor):
         missing_doc_ids = []
         if docs is None:
             return
+        
         for doc in docs:
             if not doc.uri :
                 missing_doc_ids.append(doc.id)
@@ -60,14 +64,21 @@ class PaddlepaddleOCR(Executor):
                     else doc.uri
                 )
                 for r in self.model.ocr(source_fn, cls=True):
-                    coord, (text, score) = r
-                    c = Document(text=text, weight=score)
-                    c.tags['coordinates'] = coord
-                    if self.copy_uri:
-                        c.tags['img_uri'] = doc.uri
-                    doc.chunks.append(c)
+                    # logger.info(f'paddle model result: {r}')
+                    # logger.info(f'paddle model result type: {type(r)}')
+                    # print('paddle model result: ', r)
+                    # print(r)
+                    # print(type(r))
+                    # print(r[0])
+                    for dets in r:
+                        coord, (text, score) = dets
+                        c = Document(text=text, weight=score)
+                        c.tags['coordinates'] = coord
+                        if self.copy_uri:
+                            c.tags['img_uri'] = doc.uri
+                        doc.chunks.append(c)
         if missing_doc_ids  :
-            self.logger.warning(f'No uri passed for the following Documents:{", ".join(missing_doc_ids)}')
+            logger.warning(f'No uri passed for the following Documents:{", ".join(missing_doc_ids)}')
 
     def _is_datauri(self, uri):
         scheme = urllib.parse.urlparse(uri).scheme

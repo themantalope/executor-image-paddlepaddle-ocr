@@ -1,13 +1,16 @@
 from jina import Executor, DocumentArray, Document, requests
 from paddleocr import PaddleOCR
 from typing import Optional, Dict
-from jina.logging.predefined import default_logger as logger
+# from jina.logging.predefined import default_logger as logger
 import urllib
 import random 
 import string
 import tempfile
 import os 
-import io
+import io 
+
+print(f'paddleocr version: {PaddleOCR.__version__}')
+print(f'pwd: {os.getcwd()}')
 
 class PaddlepaddleOCR(Executor):
     """

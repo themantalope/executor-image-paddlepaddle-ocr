@@ -1,3 +1,5 @@
+print('starting executor.py')
+
 from jina import Executor, DocumentArray, Document, requests
 from paddleocr import PaddleOCR
 from typing import Optional, Dict

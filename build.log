@@ -1,0 +1,42 @@
+Sending build context to Docker daemon    810kB
+Step 1/29 : FROM registry.baidubce.com/paddlepaddle/paddle:2.0.0-gpu-cuda10.1-cudnn7 as base
+ ---> 29c2918c218e
+Step 2/29 : FROM base as builder
+ ---> 29c2918c218e
+Step 3/29 : FROM jinaai/jina:3-py37-perf
+ ---> cefb6167df98
+Step 4/29 : RUN apt-get update && apt-get install -y git &&    apt-get -y install build-essential libgomp1 libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev &&     apt-get -y install wget &&     rm -rf /var/cache/apt/*
+ ---> Using cache
+ ---> 274b87b750d6
+Step 5/29 : ENV VIRTUAL_ENV=/opt/venv
+ ---> Using cache
+ ---> 91f849285d70
+Step 6/29 : RUN python3 -m venv $VIRTUAL_ENV
+ ---> Using cache
+ ---> b9d036ee159f
+Step 7/29 : ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ ---> Using cache
+ ---> ade4450c89ac
+Step 8/29 : RUN pip3.7 install --upgrade pip
+ ---> Using cache
+ ---> 02be8dedf9b6
+Step 9/29 : RUN pip3.7 install paddlehub --upgrade
+ ---> Using cache
+ ---> 47c47ab238c6
+Step 10/29 : RUN git clone https://github.com/PaddlePaddle/PaddleOCR.git /PaddleOCR
+ ---> Using cache
+ ---> dfeec83e48f4
+Step 11/29 : RUN mkdir -p /PaddleOCR/inference/
+ ---> Using cache
+ ---> b6a9da80a216
+Step 12/29 : WORKDIR /PaddleOCR
+ ---> Using cache
+ ---> 0e97af607089
+Step 13/29 : RUN pip3.7 install -r requirements.txt
+ ---> Using cache
+ ---> 28d9fe32a83c
+Step 14/29 : RUN pip install paddlepaddle-gpu==2.0.0 -i https://mirror.baidu.com/pypi/simple
+ ---> Running in befaeddbb551
+Looking in indexes: https://mirror.baidu.com/pypi/simple
+Collecting paddlepaddle-gpu==2.0.0
+  Downloading https://mirror.baidu.com/pypi/packages/d9/24/8eabaed904af5dbdf4f11adeedc0e5ff2bef527d63293b50d0ceb418da1d/paddlepaddle_gpu-2.0.0-cp37-cp37m-manylinux1_x86_64.whl (689.6 MB)

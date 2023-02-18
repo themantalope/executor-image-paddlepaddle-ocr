@@ -1,10 +1,11 @@
-FROM registry.baidubce.com/paddlepaddle/paddle:2.0.0-gpu-cuda10.1-cudnn7 as base 
+# FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.7-cudnn8.4-trt8.4 
 # Version: 2.0.0
 
-FROM base as builder
+# FROM base as builder
 
+FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.7-cudnn8.4-trt8.4
 
-FROM jinaai/jina:3-py37-perf
+# FROM jinaai/jina:3.13.2-dev81-py311-perf
 
 # install git
 RUN apt-get update && apt-get install -y git &&\
@@ -13,20 +14,22 @@ RUN apt-get update && apt-get install -y git &&\
     rm -rf /var/cache/apt/*
 
 # PaddleOCR base on Python3.7
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# ENV VIRTUAL_ENV=/opt/venv
+# RUN python -m venv $VIRTUAL_ENV
+# ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # RUN pip3.7 install --upgrade pip -i https://mirror.baidu.com/pypi/simple
-RUN pip3.7 install --upgrade pip 
+RUN pip install --upgrade pip 
 # RUN pip3.7 install paddlehub --upgrade -i https://mirror.baidu.com/pypi/simple
-RUN pip3.7 install paddlehub --upgrade
+RUN pip install paddlehub --upgrade
 
 RUN git clone https://github.com/PaddlePaddle/PaddleOCR.git /PaddleOCR
 RUN mkdir -p /PaddleOCR/inference/
 WORKDIR /PaddleOCR
 # RUN pip3.7 install -r requirements.txt -i https://mirror.baidu.com/pypi/simple
-RUN pip3.7 install -r requirements.txt
-RUN pip install paddlepaddle-gpu==2.0.0 -i https://mirror.baidu.com/pypi/simple
+RUN pip install -r requirements.txt
+RUN pip install -e .
+# RUN pip install paddlepaddle-gpu==2.0.0 -i https://mirror.baidu.com/pypi/simple
+# RUN pip install paddlepaddle-gpu==2.4.1
 
 
 WORKDIR /PaddleOCR/inference/
@@ -52,13 +55,16 @@ RUN tar xf /PaddleOCR/inference/ch_ppocr_server_v2.0_rec_infer.tar -C /PaddleOCR
 # ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # ENV PATH="/opt/venv/bin:$PATH"
 
+RUN pip install --upgrade "docarray[full]"
+RUN pip install --upgrade "jina[devel]"
+RUN pip install --force protobuf==3.20
 
 
 # install requirements before copying the workspace
 WORKDIR /
 COPY requirements.txt /requirements.txt
-RUN pip3.7 install -r requirements.txt
-WORKDIR /PaddleOCR
+RUN pip install -r requirements.txt
+# WORKDIR /PaddleOCR
 # RUN pip3.7 install -e .
 
 # setup the workspace

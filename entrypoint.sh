@@ -7,5 +7,6 @@ else
     echo "PaddleOCR directory does not exist"
 fi
 
-# jina executor --uses config.yml
-exec "$@"
+mkdir logs
+jina executor --uses config.yml > logs/jina.log 2>&1 &
+# exec "$@"

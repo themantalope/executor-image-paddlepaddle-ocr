@@ -2,17 +2,26 @@ print('starting executor.py')
 
 from jina import Executor, DocumentArray, Document, requests
 from paddleocr import PaddleOCR
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
+from typing_extensions import Literal
 # from jina.logging.predefined import default_logger as logger
+import paddleocr
 import urllib
 import random 
 import string
 import tempfile
 import os 
 import io 
+import typing
+import logging
 
-print(f'paddleocr version: {PaddleOCR.__version__}')
+logger = logging.getLogger(__name__)
+
+# print(f'paddleocr version: {PaddleOCR.__version__}')
+
 print(f'pwd: {os.getcwd()}')
+
+MODES = Literal['ocr', 'struct', 'both']
 
 class PaddlepaddleOCR(Executor):
     """
@@ -22,6 +31,7 @@ class PaddlepaddleOCR(Executor):
         self,
         paddleocr_args : Optional[Dict] = None,
         copy_uri: bool = True,
+        mode: Optional[MODES] = 'ocr',
         **kwargs
         ):
         """
@@ -32,6 +42,8 @@ class PaddlepaddleOCR(Executor):
         Other params can be found in `paddleocr --help`. More information can be found here https://github.com/PaddlePaddle/PaddleOCR
         :param copy_uri: Set to `True` to store the image `uri` at the `.tags['image_uri']` of the chunks that are extracted from the image.
         By default, `copy_uri=True`. Set this to `False` when you don't want to store image `uri` with the chunks or when the image uri is a `datauri`.
+        :param mode: the mode of the executor. `ocr` for extracting text from images and `struct` for doing structure extraction. use 'both' to do both.
+            default is 'ocr'
         """
         self._paddleocr_args = paddleocr_args or {}
         self._paddleocr_args.setdefault('use_angle_cls', True) 
@@ -42,6 +54,7 @@ class PaddlepaddleOCR(Executor):
         super(PaddlepaddleOCR, self).__init__(**kwargs)
         self.model = PaddleOCR(**self._paddleocr_args)
         self.copy_uri = copy_uri
+        self.mode = mode
         # print(f'paddleocr version: {PaddleOCR.__version__}')
         # self.logger = logger
 
@@ -53,6 +66,9 @@ class PaddlepaddleOCR(Executor):
         The `tags['coordinates']`  contains four lists, each of which corresponds to the `(x, y)` coordinates one corner of the bounding box. 
         :param docs: the input Documents with image URI in the `uri` field
         """
+        
+        # TODO: allow the user to pass the image as a blob in the request, will filter by the mime type
+        # TODO: if the image is a blob, temporarily save it to a file and pass the file name to the model
         missing_doc_ids = []
         if docs is None:
             return

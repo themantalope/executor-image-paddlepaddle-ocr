@@ -8,7 +8,7 @@ else
 fi
 
 mkdir logs
-nohup jina executor --uses config.yml > logs/jina.log 2>&1 &
+jina executor --uses config.yml --timeout-ready 3000000 > logs/jina.log 2>&1 &
 
 until [ -f logs/jina.log ]
 do
@@ -20,5 +20,5 @@ cat logs/jina.log
 nohup jupyter-lab --port 8888 --allow-root &
 
 
-/bin/bash
+# /bin/bash
 # exec "$@"

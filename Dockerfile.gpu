@@ -80,3 +80,4 @@ ENV REC_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_server_v2.0_rec_infer
 # ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
 RUN chmod +x /workdir/entrypoint.sh
 ENTRYPOINT ["/workdir/entrypoint.sh"]
+CMD ["Docker"]

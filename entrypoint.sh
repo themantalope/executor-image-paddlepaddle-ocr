@@ -8,5 +8,17 @@ else
 fi
 
 mkdir logs
-jina executor --uses config.yml > logs/jina.log 2>&1 &
-exec "$@"
+nohup jina executor --uses config.yml > logs/jina.log 2>&1 &
+
+until [ -f logs/jina.log ]
+do
+     sleep 1
+done
+
+cat logs/jina.log
+
+nohup jupyter-lab --port 8888 --allow-root &
+
+
+/bin/bash
+# exec "$@"

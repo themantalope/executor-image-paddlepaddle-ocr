@@ -9,4 +9,4 @@ fi
 
 mkdir logs
 jina executor --uses config.yml > logs/jina.log 2>&1 &
-# exec "$@"
+exec "$@"

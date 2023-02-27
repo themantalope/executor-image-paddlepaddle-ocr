@@ -46,6 +46,7 @@ RUN tar xf /PaddleOCR/inference/ch_ppocr_mobile_v2.0_cls_infer.tar -C /PaddleOCR
 RUN wget --progress=bar https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_server_v2.0_rec_infer.tar
 RUN tar xf /PaddleOCR/inference/ch_ppocr_server_v2.0_rec_infer.tar -C /PaddleOCR/inference/
 
+
 # COPY --from=builder /opt/venv /opt/venv
 # COPY --from=builder /PaddleOCR /PaddleOCR
 
@@ -70,6 +71,11 @@ RUN pip install -r requirements.txt
 # setup the workspace
 COPY . /workdir
 WORKDIR /workdir
+
+ENV DET_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_server_v2.0_det_infer
+ENV CLS_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_mobile_v2.0_cls_infer
+ENV REC_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_server_v2.0_rec_infer
+
 
 # ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
 RUN chmod +x /workdir/entrypoint.sh

@@ -12,12 +12,18 @@ import string
 import tempfile
 import os 
 import io 
-import typing
 import logging
 
 logger = logging.getLogger(__name__)
 
 # print(f'paddleocr version: {PaddleOCR.__version__}')
+
+
+OPT_DICT = {
+    'det_model_dir': os.environ['DET_INFER_MODEL_DIR'],
+    'rec_model_dir': os.environ['REC_INFER_MODEL_DIR'],
+    'cls_model_dir': os.environ['CLS_INFER_MODEL_DIR'],
+}
 
 print(f'pwd: {os.getcwd()}')
 
@@ -48,6 +54,7 @@ class PaddlepaddleOCR(Executor):
         self._paddleocr_args = paddleocr_args or {}
         self._paddleocr_args.setdefault('use_angle_cls', True) 
         self._paddleocr_args.setdefault('lang', 'en')
+        self._paddleocr_args.update(OPT_DICT)
         if isinstance(paddleocr_args, dict):
             self._paddleocr_args.setdefault('use_gpu', paddleocr_args['use_gpu'] if 'use_gpu' in paddleocr_args else True)
         print(f'paddleocr_args: {self._paddleocr_args}')

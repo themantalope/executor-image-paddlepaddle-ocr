@@ -6,6 +6,8 @@ from typing import Optional, Dict, Union
 from typing_extensions import Literal
 # from jina.logging.predefined import default_logger as logger
 import paddleocr
+from paddleocr import PaddleOCR, draw_ocr, PPStructure, draw_structure_result, save_structure_res
+import uuid
 import urllib
 import random 
 import string
@@ -13,6 +15,7 @@ import tempfile
 import os 
 import io 
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,7 @@ OPT_DICT = {
     'det_model_dir': os.environ['DET_INFER_MODEL_DIR'],
     'rec_model_dir': os.environ['REC_INFER_MODEL_DIR'],
     'cls_model_dir': os.environ['CLS_INFER_MODEL_DIR'],
+    'use_dilation': True,
 }
 
 print(f'pwd: {os.getcwd()}')
@@ -38,6 +42,7 @@ class PaddlepaddleOCR(Executor):
         paddleocr_args : Optional[Dict] = None,
         copy_uri: bool = True,
         mode: Optional[MODES] = 'ocr',
+        save_ocr_images: bool = False,
         **kwargs
         ):
         """
@@ -62,9 +67,41 @@ class PaddlepaddleOCR(Executor):
         self.model = PaddleOCR(**self._paddleocr_args)
         self.copy_uri = copy_uri
         self.mode = mode
+        self.logger = logger
         # print(f'paddleocr version: {PaddleOCR.__version__}')
         # self.logger = logger
 
+    def _save_doc_image_tensor_to_temp_file(self, doc, tmpdir, ext='png'):
+        assert ext in ['png', 'jpeg'], f'extension {ext} not supported. must be png or jpeg'
+        tmp_fn = os.path.join(
+            tmpdir,
+            f'{str(uuid.uuid4())}.{ext}'
+        )
+        doc.save_image_tensor_to_file(tmp_fn, image_format=ext)
+        
+    
+    def _convert_ocr_results_to_dict(self, ocr_results):
+        ocr_dicts = []
+        for dets in ocr_results:
+            d = {}
+            coords, (text, score) = dets
+            d['text'] = text
+            d['score'] = score
+            d['coords'] = coords
+            d['upper_left'] = coords[0]
+            d['upper_right'] = coords[1]
+            d['lower_right'] = coords[2]
+            d['lower_left'] = coords[3]
+            d['width'] = max(d['upper_right'][0], d['lower_right'][0]) - min(d['upper_left'][0], d['lower_left'][0])
+            d['height'] = max(d['lower_left'][1], d['lower_right'][1]) - min(d['upper_left'][1], d['upper_right'][1])
+            d['center'] = np.array(coords).mean(axis=0)
+            ocr_dicts.append(d)
+        return ocr_dicts
+    
+    def _convert_structure_results_to_dict(self, structure_results):
+        pass # TODO: implement this
+            
+    
     @requests()
     def extract(self, docs: Optional[DocumentArray] = None, **kwargs):
         """
@@ -125,3 +162,52 @@ class PaddlepaddleOCR(Executor):
             with open(tmp_fn, 'wb') as f:
                 f.write(binary_fn.read())
         return tmp_fn
+    
+# from paddleocr examples:
+# from paddleocr import PaddleOCR,draw_ocr
+# Paddleocr supports Chinese, English, French, German, Korean and Japanese.
+# You can set the parameter `lang` as `ch`, `en`, `fr`, `german`, `korean`, `japan`
+# to switch the language model in order.
+# ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
+# img_path = './imgs_en/img_12.jpg'
+# result = ocr.ocr(img_path, cls=True)
+# for idx in range(len(result)):
+#     res = result[idx]
+#     for line in res:
+#         print(line)
+
+
+# # draw result
+# from PIL import Image
+# result = result[0]
+# image = Image.open(img_path).convert('RGB')
+# boxes = [line[0] for line in result]
+# txts = [line[1][0] for line in result]
+# scores = [line[1][1] for line in result]
+# im_show = draw_ocr(image, boxes, txts, scores, font_path='./fonts/simfang.ttf')
+# im_show = Image.fromarray(im_show)
+# im_show.save('result.jpg')
+
+# import os
+# import cv2
+# from paddleocr import PPStructure,draw_structure_result,save_structure_res
+
+# table_engine = PPStructure(show_log=True, image_orientation=True)
+
+# save_folder = './output'
+# img_path = 'ppstructure/docs/table/1.png'
+# img = cv2.imread(img_path)
+# result = table_engine(img)
+# save_structure_res(result, save_folder,os.path.basename(img_path).split('.')[0])
+
+# for line in result:
+#     line.pop('img')
+#     print(line)
+
+# from PIL import Image
+
+# font_path = 'doc/fonts/simfang.ttf' # PaddleOCR下提供字体包
+# image = Image.open(img_path).convert('RGB')
+# im_show = draw_structure_result(image, result,font_path=font_path)
+# im_show = Image.fromarray(im_show)
+# im_show.save('result.jpg')

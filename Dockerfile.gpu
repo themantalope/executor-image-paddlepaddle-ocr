@@ -43,8 +43,8 @@ RUN wget --progress=bar https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr
 RUN tar xf /PaddleOCR/inference/ch_ppocr_mobile_v2.0_cls_infer.tar -C /PaddleOCR/inference/
 
 # Download orc recognition model(light version). If you want to change normal version, you can change ch_ppocr_mobile_v2.0_rec_infer to ch_ppocr_server_v2.0_rec_infer, also remember change rec_model_dir in deploy/hubserving/ocr_system/params.py）
-RUN wget --progress=bar https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_server_v2.0_rec_infer.tar
-RUN tar xf /PaddleOCR/inference/ch_ppocr_server_v2.0_rec_infer.tar -C /PaddleOCR/inference/
+RUN wget --progress=bar https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar
+RUN tar xf /PaddleOCR/inference/en_PP-OCRv3_rec_infer.tar -C /PaddleOCR/inference/
 
 
 # COPY --from=builder /opt/venv /opt/venv

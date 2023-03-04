@@ -17,8 +17,8 @@ done
 
 cat logs/jina.log
 
-nohup jupyter-lab --port 8888 --allow-root &
+nohup jupyter-lab --port 8888 --ip=0.0.0.0 --allow-root > logs/jupyter.log 2>&1 &
 
 
-# /bin/bash
+/bin/bash
 # exec "$@"

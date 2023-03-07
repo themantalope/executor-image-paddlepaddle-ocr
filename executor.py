@@ -134,20 +134,30 @@ class PaddlePaddleOCR(Executor):
                 #     else doc.uri
                 # )
                 source_fn = self._save_doc_image_tensor_to_temp_file(doc, tmpdir)
-                for r in self.model.ocr(source_fn, cls=True):
-                    logger.info(f'paddle model result: {r}')
-                    logger.info(f'paddle model result type: {type(r)}')
-                    # print('paddle model result: ', r)
-                    # print(r)
-                    # print(type(r))
-                    # print(r[0])
-                    for dets in r:
-                        coord, (text, score) = dets
-                        c = Document(text=text, weight=score)
-                        c.tags['coordinates'] = coord
-                        if self.copy_uri:
-                            c.tags['img_uri'] = doc.uri
-                        doc.chunks.append(c)
+                ocr_r = None
+                str_r = None
+                
+                if self.mode == 'ocr':
+                    ocr_r = self._get_ocr(source_fn)
+                elif self.mode == 'struct':
+                    str_r = self._get_structure(source_fn)
+                elif self.mode == 'both':
+                    ocr_r = self._get_ocr(source_fn)
+                    str_r = self._get_structure(source_fn)
+                # for r in self.model.ocr(source_fn, cls=True):
+                #     logger.info(f'paddle model result: {r}')
+                #     logger.info(f'paddle model result type: {type(r)}')
+                #     # print('paddle model result: ', r)
+                #     # print(r)
+                #     # print(type(r))
+                #     # print(r[0])
+                #     for dets in r:
+                #         coord, (text, score) = dets
+                #         c = Document(text=text, weight=score)
+                #         c.tags['coordinates'] = coord
+                #         if self.copy_uri:
+                #             c.tags['img_uri'] = doc.uri
+                #         doc.chunks.append(c)
         
         if missing_tensor_doc_ids:
             logger.warning(f'No uri passed for the following Documents:{", ".join(missing_tensor_doc_ids)}')
@@ -156,7 +166,15 @@ class PaddlePaddleOCR(Executor):
         results = self.model.ocr(filepath, cls=True)
         return results
     
+    def _get_ocr_visualization(self, filepath, ocr_results):
+        pass
     
+    def _get_structure(self, filepath):
+        results = self.table_engine(filepath)
+        return results
+    
+    def _get_strcuture_visualization(self, filepath, str_results):
+        pass
     
     def _is_datauri(self, uri):
         scheme = urllib.parse.urlparse(uri).scheme

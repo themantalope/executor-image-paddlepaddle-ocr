@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # print(f'paddleocr version: {PaddleOCR.__version__}')
 
-FONT = './helvetica-light.ttf'
+FONT = 'helvetica-light.ttf'
 assert os.path.isfile(FONT), f'font {FONT} not found'
 
 OPT_DICT = {

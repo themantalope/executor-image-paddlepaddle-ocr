@@ -17,7 +17,7 @@ done
 
 cat logs/jina.log
 
-nohup jupyter-lab --port 8888 --ip=0.0.0.0 --allow-root > logs/jupyter.log 2>&1 &
+nohup jupyter-lab --port=8888 --ip="*" --allow-root --no-browser --NotebookApp.token='' --NotebookApp.password='' > logs/jupyter.log 2>&1 &
 
 
 /bin/bash

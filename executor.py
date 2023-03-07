@@ -33,7 +33,7 @@ print(f'pwd: {os.getcwd()}')
 
 MODES = Literal['ocr', 'struct', 'both']
 
-class PaddlepaddleOCR(Executor):
+class PaddlePaddleOCR(Executor):
     """
     An executor to extract text from images using paddlepaddleOCR
     """
@@ -63,7 +63,7 @@ class PaddlepaddleOCR(Executor):
         if isinstance(paddleocr_args, dict):
             self._paddleocr_args.setdefault('use_gpu', paddleocr_args['use_gpu'] if 'use_gpu' in paddleocr_args else True)
         print(f'paddleocr_args: {self._paddleocr_args}')
-        super(PaddlepaddleOCR, self).__init__(**kwargs)
+        super(PaddlePaddleOCR, self).__init__(**kwargs)
         self.model = PaddleOCR(**self._paddleocr_args)
         self.copy_uri = copy_uri
         self.mode = mode
@@ -78,6 +78,7 @@ class PaddlepaddleOCR(Executor):
             f'{str(uuid.uuid4())}.{ext}'
         )
         doc.save_image_tensor_to_file(tmp_fn, image_format=ext)
+        return tmp_fn
         
     
     def _convert_ocr_results_to_dict(self, ocr_results):
@@ -105,29 +106,31 @@ class PaddlepaddleOCR(Executor):
     @requests()
     def extract(self, docs: Optional[DocumentArray] = None, **kwargs):
         """
-        Load the image from `uri`, extract text and bounding boxes. The text is stored in the  
-        `text` attribute of the chunks and the coordinates are stored in the `tags['coordinates']` as a list. 
-        The `tags['coordinates']`  contains four lists, each of which corresponds to the `(x, y)` coordinates one corner of the bounding box. 
-        :param docs: the input Documents with image URI in the `uri` field
+        saves the image tensor of the documents to a temporary file and then extracts text from the image using paddlepaddleOCR
+        
         """
         
-        # TODO: allow the user to pass the image as a blob in the request, will filter by the mime type
-        # TODO: if the image is a blob, temporarily save it to a file and pass the file name to the model
-        missing_doc_ids = []
+        # TODO: allow the user to pass the image as a tensor in the request, will filter by the mime type
+        # missing_doc_ids = []
+        missing_tensor_doc_ids = []
         if docs is None:
             return
         
         for doc in docs:
-            if not doc.uri :
-                missing_doc_ids.append(doc.id)
-                continue
+            # if not doc.uri :
+            #     missing_doc_ids.append(doc.id)
+            #     continue
+            if doc.tensor is None:
+                missing_tensor_doc_ids.append(doc.id)
+                
 
             with tempfile.TemporaryDirectory() as tmpdir:
-                source_fn = (
-                    self._save_uri_to_tmp_file(doc.uri, tmpdir)
-                    if self._is_datauri(doc.uri)
-                    else doc.uri
-                )
+                # source_fn = (
+                #     self._save_uri_to_tmp_file(doc.uri, tmpdir)
+                #     if self._is_datauri(doc.uri)
+                #     else doc.uri
+                # )
+                source_fn = self._save_doc_image_tensor_to_temp_file(doc, tmpdir)
                 for r in self.model.ocr(source_fn, cls=True):
                     # logger.info(f'paddle model result: {r}')
                     # logger.info(f'paddle model result type: {type(r)}')
@@ -142,8 +145,8 @@ class PaddlepaddleOCR(Executor):
                         if self.copy_uri:
                             c.tags['img_uri'] = doc.uri
                         doc.chunks.append(c)
-        if missing_doc_ids  :
-            logger.warning(f'No uri passed for the following Documents:{", ".join(missing_doc_ids)}')
+        if missing_tensor_doc_ids:
+            logger.warning(f'No uri passed for the following Documents:{", ".join(missing_tensor_doc_ids)}')
 
     def _is_datauri(self, uri):
         scheme = urllib.parse.urlparse(uri).scheme

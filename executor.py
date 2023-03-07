@@ -132,8 +132,8 @@ class PaddlePaddleOCR(Executor):
                 # )
                 source_fn = self._save_doc_image_tensor_to_temp_file(doc, tmpdir)
                 for r in self.model.ocr(source_fn, cls=True):
-                    # logger.info(f'paddle model result: {r}')
-                    # logger.info(f'paddle model result type: {type(r)}')
+                    logger.info(f'paddle model result: {r}')
+                    logger.info(f'paddle model result type: {type(r)}')
                     # print('paddle model result: ', r)
                     # print(r)
                     # print(type(r))
@@ -145,6 +145,7 @@ class PaddlePaddleOCR(Executor):
                         if self.copy_uri:
                             c.tags['img_uri'] = doc.uri
                         doc.chunks.append(c)
+        
         if missing_tensor_doc_ids:
             logger.warning(f'No uri passed for the following Documents:{", ".join(missing_tensor_doc_ids)}')
 

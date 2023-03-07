@@ -35,17 +35,17 @@ RUN pip install -e .
 WORKDIR /PaddleOCR/inference/
 # Download orc detect model(light version). if you want to change normal version, you can change ch_ppocr_mobile_v2.0_det_infer to ch_ppocr_server_v2.0_det_infer, also remember change det_model_dir in deploy/hubserving/ocr_system/params.py）
 # we are just going to use wget in the dockerfile 
-RUN wget --progress=bar  https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_server_v2.0_det_infer.tar
-RUN tar xf /PaddleOCR/inference/ch_ppocr_server_v2.0_det_infer.tar -C /PaddleOCR/inference/
-
+RUN wget --progress=bar  https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese/ch_PP-OCRv3_det_infer.tar
+RUN tar xf /PaddleOCR/inference/ch_PP-OCRv3_det_infer.tar -C /PaddleOCR/inference/
+ENV DET_INFER_MODEL_DIR=/PaddleOCR/inference/ch_PP-OCRv3_det_infer
 # Download direction classifier(light version). If you want to change normal version, you can change ch_ppocr_mobile_v2.0_cls_infer to ch_ppocr_mobile_v2.0_cls_infer, also remember change cls_model_dir in deploy/hubserving/ocr_system/params.py）
 RUN wget --progress=bar https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar
 RUN tar xf /PaddleOCR/inference/ch_ppocr_mobile_v2.0_cls_infer.tar -C /PaddleOCR/inference/
-
+ENV CLS_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_mobile_v2.0_cls_infer
 # Download orc recognition model(light version). If you want to change normal version, you can change ch_ppocr_mobile_v2.0_rec_infer to ch_ppocr_server_v2.0_rec_infer, also remember change rec_model_dir in deploy/hubserving/ocr_system/params.py）
 RUN wget --progress=bar https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_infer.tar
 RUN tar xf /PaddleOCR/inference/en_PP-OCRv3_rec_infer.tar -C /PaddleOCR/inference/
-
+ENV REC_INFER_MODEL_DIR=/PaddleOCR/inference/en_PP-OCRv3_rec_infer
 
 # COPY --from=builder /opt/venv /opt/venv
 # COPY --from=builder /PaddleOCR /PaddleOCR
@@ -73,10 +73,6 @@ RUN pip install -r requirements.txt
 # setup the workspace
 COPY . /workdir
 WORKDIR /workdir
-
-ENV DET_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_server_v2.0_det_infer
-ENV CLS_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_mobile_v2.0_cls_infer
-ENV REC_INFER_MODEL_DIR=/PaddleOCR/inference/ch_ppocr_server_v2.0_rec_infer
 
 
 # ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

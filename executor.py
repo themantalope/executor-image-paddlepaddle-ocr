@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 # print(f'paddleocr version: {PaddleOCR.__version__}')
 
+FONT = './helvetica-light.ttf'
+assert os.path.isfile(FONT), f'font {FONT} not found'
 
 OPT_DICT = {
     'det_model_dir': os.environ['DET_INFER_MODEL_DIR'],
@@ -65,6 +67,7 @@ class PaddlePaddleOCR(Executor):
         print(f'paddleocr_args: {self._paddleocr_args}')
         super(PaddlePaddleOCR, self).__init__(**kwargs)
         self.model = PaddleOCR(**self._paddleocr_args)
+        self.table_engine = PPStructure(show_log=True, image_orientation=True)
         self.copy_uri = copy_uri
         self.mode = mode
         self.logger = logger
@@ -149,6 +152,12 @@ class PaddlePaddleOCR(Executor):
         if missing_tensor_doc_ids:
             logger.warning(f'No uri passed for the following Documents:{", ".join(missing_tensor_doc_ids)}')
 
+    def _get_ocr(self, filepath):
+        results = self.model.ocr(filepath, cls=True)
+        return results
+    
+    
+    
     def _is_datauri(self, uri):
         scheme = urllib.parse.urlparse(uri).scheme
         return scheme in {'data'}

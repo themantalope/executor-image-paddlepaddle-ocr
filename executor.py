@@ -16,6 +16,7 @@ import os
 import io 
 import logging
 import numpy as np
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,7 @@ class PaddlePaddleOCR(Executor):
         self.copy_uri = copy_uri
         self.mode = mode
         self.logger = logger
+        self.save_ocr_images = save_ocr_images
         # print(f'paddleocr version: {PaddleOCR.__version__}')
         # self.logger = logger
 
@@ -144,6 +146,24 @@ class PaddlePaddleOCR(Executor):
                 elif self.mode == 'both':
                     ocr_r = self._get_ocr(source_fn)
                     str_r = self._get_structure(source_fn)
+                
+                if ocr_r and str_r is None:
+                    ocr_dicts = self._convert_ocr_results_to_dict(ocr_r)
+                    for d in ocr_dicts:
+                        c = Document(text=d['text'], weight=d['score'])
+                        # c.tags['coordinates'] = d['coords']
+                        c.tags.update(d)
+                        if self.copy_uri:
+                            c.tags['img_uri'] = doc.uri
+                        doc.chunks.append(c)
+                    if self.save_ocr_images:
+                        ocr_vis = self._get_ocr_visualization(source_fn, ocr_r)
+                        doc.tags['ocr_image'] = ocr_vis
+                elif str_r and ocr_r is None:
+                    raise NotImplementedError('structure extraction not implemented yet')
+                elif ocr_r and str_r:
+                    raise NotImplementedError('structure extraction not implemented yet')
+                
                 # for r in self.model.ocr(source_fn, cls=True):
                 #     logger.info(f'paddle model result: {r}')
                 #     logger.info(f'paddle model result type: {type(r)}')
@@ -167,7 +187,12 @@ class PaddlePaddleOCR(Executor):
         return results
     
     def _get_ocr_visualization(self, filepath, ocr_results):
-        pass
+        image = Image.open(filepath).convert('RGB')
+        boxes = [line[0] for line in ocr_results[0]]
+        txts = [line[1][0] for line in ocr_results[0]]
+        scores = [line[1][1] for line in ocr_results[0]]
+        im_show = draw_ocr(image, boxes, txts, scores, font_path=FONT)
+        return im_show
     
     def _get_structure(self, filepath):
         results = self.table_engine(filepath)

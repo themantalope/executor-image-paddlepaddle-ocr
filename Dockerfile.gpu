@@ -3,18 +3,19 @@
 
 # FROM base as builder
 
-FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.7-cudnn8.4-trt8.4
-# FROM paddlepaddle/paddle:2.4.2-gpu-cuda10.2-cudnn7.6-trt7.0
+# FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.7-cudnn8.4-trt8.4
+FROM paddlepaddle/paddle:2.4.2-gpu-cuda10.2-cudnn7.6-trt7.0
 # FROM paddlepaddle/paddle:2.4.1-gpu-cuda10.2-cudnn7.6-trt7.0
 
 # FROM jinaai/jina:3.13.2-dev81-py311-perf
 
 # install git
+
 RUN apt-get update && apt-get install -y git &&\
     apt-get -y install build-essential libgomp1 libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev && \
     apt-get -y install wget && \ 
     apt-get -y install vim nano && \
-    apt-get -y install tesseract-ocr libtesseract-dev && \
+    apt-get -y install software-properties-common && \
     rm -rf /var/cache/apt/*
 
 # PaddleOCR base on Python3.7
@@ -22,16 +23,11 @@ RUN apt-get update && apt-get install -y git &&\
 # RUN python -m venv $VIRTUAL_ENV
 # ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # RUN pip3.7 install --upgrade pip -i https://mirror.baidu.com/pypi/simple
-RUN pip install --upgrade pip 
-# RUN pip3.7 install paddlehub --upgrade -i https://mirror.baidu.com/pypi/simple
-RUN pip install paddlehub --upgrade
+
 
 RUN git clone https://github.com/PaddlePaddle/PaddleOCR.git /PaddleOCR
 RUN mkdir -p /PaddleOCR/inference/
-WORKDIR /PaddleOCR
-# RUN pip3.7 install -r requirements.txt -i https://mirror.baidu.com/pypi/simple
-RUN pip install -r requirements.txt
-RUN pip install -e .
+
 # RUN pip install paddlepaddle-gpu==2.0.0 -i https://mirror.baidu.com/pypi/simple
 # RUN pip install paddlepaddle-gpu==2.4.1
 
@@ -103,9 +99,16 @@ RUN wget --progress=bar https://paddleclas.bj.bcebos.com/models/PULC/inference/t
 RUN tar xf /PaddleOCR/inference/text_image_orientation_infer.tar -C /PaddleOCR/inference/
 ENV PULC_ORIENT_MODEL=/PaddleOCR/inference/text_image_orientation_infer
 
+RUN pip install --upgrade pip 
+# RUN pip3.7 install paddlehub --upgrade -i https://mirror.baidu.com/pypi/simple
+RUN pip install paddlehub --upgrade
+
 # COPY --from=builder /opt/venv /opt/venv
 # COPY --from=builder /PaddleOCR /PaddleOCR
-
+WORKDIR /PaddleOCR
+# RUN pip3.7 install -r requirements.txt -i https://mirror.baidu.com/pypi/simple
+RUN pip install -r requirements.txt
+RUN pip install -e .
 
 # ENV VIRTUAL_ENV=/opt/venv
 # RUN python3 -m venv $VIRTUAL_ENV
@@ -118,6 +121,12 @@ RUN pip install --force protobuf==3.20
 
 WORKDIR /PaddleOCR
 RUN pip install .
+
+RUN apt-get update
+RUN apt-get install --reinstall --yes python3-software-properties
+
+# RUN python3.7 /usr/bin/apt-add-repository --yes ppa:alex-p/tesseract-ocr5
+# RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev
 
 # install requirements before copying the workspace
 WORKDIR /

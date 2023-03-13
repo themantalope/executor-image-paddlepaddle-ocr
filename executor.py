@@ -17,6 +17,9 @@ import io
 import logging
 import numpy as np
 from PIL import Image
+import text_group_helper as tgh
+import itertools
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +71,13 @@ class PaddlePaddleOCR(Executor):
         print(f'paddleocr_args: {self._paddleocr_args}')
         super(PaddlePaddleOCR, self).__init__(**kwargs)
         self.model = PaddleOCR(**self._paddleocr_args)
-        self.table_engine = PPStructure(show_log=True, image_orientation=True)
+        # self.table_engine = PPStructure(show_log=True, image_orientation=True)
         self.copy_uri = copy_uri
         self.mode = mode
         self.logger = logger
         self.save_ocr_images = save_ocr_images
+        if self.mode != 'ocr':
+            raise NotImplementedError('only ocr mode is supported for now')
         # print(f'paddleocr version: {PaddleOCR.__version__}')
         # self.logger = logger
 
@@ -146,23 +151,40 @@ class PaddlePaddleOCR(Executor):
                 elif self.mode == 'both':
                     ocr_r = self._get_ocr(source_fn)
                     str_r = self._get_structure(source_fn)
+                    
+                # make ocr text groups
+                # first flatten the ocr results
+                ocr_res = list(itertools.chain(*ocr_r))
+                tg = tgh.convert_ocr_to_text_groups(ocr_res)
                 
-                if ocr_r and str_r is None:
-                    ocr_dicts = self._convert_ocr_results_to_dict(ocr_r)
-                    for d in ocr_dicts:
-                        c = Document(text=d['text'], weight=d['score'])
-                        # c.tags['coordinates'] = d['coords']
-                        c.tags.update(d)
-                        if self.copy_uri:
-                            c.tags['img_uri'] = doc.uri
-                        doc.chunks.append(c)
-                    if self.save_ocr_images:
-                        ocr_vis = self._get_ocr_visualization(source_fn, ocr_r)
-                        doc.tags['ocr_image'] = ocr_vis
-                elif str_r and ocr_r is None:
-                    raise NotImplementedError('structure extraction not implemented yet')
-                elif ocr_r and str_r:
-                    raise NotImplementedError('structure extraction not implemented yet')
+                for textgroup in tg:
+                    c = Document(text=textgroup['text'])
+                    c.tags.update(textgroup)
+                    doc.chunks.append(c)
+                
+                if self.save_ocr_images:
+                    ocr_vis = self._get_ocr_visualization(source_fn, ocr_r)
+                    doc.tags['ocr_image'] = ocr_vis
+                    
+                if self.copy_uri:
+                    doc.tags['img_uri'] = doc.uri
+                
+                # if ocr_r and str_r is None:
+                #     ocr_dicts = self._convert_ocr_results_to_dict(ocr_r)
+                #     for d in ocr_dicts:
+                #         c = Document(text=d['text'], weight=d['score'])
+                #         # c.tags['coordinates'] = d['coords']
+                #         c.tags.update(d)
+                #         if self.copy_uri:
+                #             c.tags['img_uri'] = doc.uri
+                #         doc.chunks.append(c)
+                #     if self.save_ocr_images:
+                #         ocr_vis = self._get_ocr_visualization(source_fn, ocr_r)
+                #         doc.tags['ocr_image'] = ocr_vis
+                # elif str_r and ocr_r is None:
+                #     raise NotImplementedError('structure extraction not implemented yet')
+                # elif ocr_r and str_r:
+                #     raise NotImplementedError('structure extraction not implemented yet')
                 
                 # for r in self.model.ocr(source_fn, cls=True):
                 #     logger.info(f'paddle model result: {r}')
